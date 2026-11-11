@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnKembali"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="‹ Kembali"
+            android:textAllCaps="false"
+            android:textColor="@color/primary_green" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Laporan shift"
+            android:textColor="@color/white"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Laporan dapat diisi atau diperbarui selama shift berjalan. Shift yang melewati tengah malam tetap disimpan sebagai satu laporan."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/dark_surface"
+            app:cardCornerRadius="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Stok roti" android:textColor="@color/white" android:textSize="17sp" android:textStyle="bold" />
+
+                <TextView android:id="@+id/tvSisaKemarin" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Sisa roti kemarin: memuat..." android:textColor="@color/primary_green" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:id="@+id/tvKasirOffline" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Terjual kasir hari ini: 0 roti" android:textColor="@color/text_secondary" android:textSize="13sp" />
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Roti diantar hari ini" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etRotiDiantar" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilRotiSisa" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Roti sisa" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etRotiSisa" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:textColor="@color/white" />
+                </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Roti rusak / bonus / tester (opsional)" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etRotiRusakBonus" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/dark_surface" app:cardCornerRadius="20dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Uang shift" android:textColor="@color/white" android:textSize="17sp" android:textStyle="bold" />
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:hint="Pengeluaran (Rp)" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etPengeluaran" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Setor uang (Rp)" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etSetorUang" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Sisa modal (Rp)" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etSisaModal" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Catatan (opsional)" app:boxBackgroundMode="outline" app:boxStrokeColor="@color/primary_green" app:hintTextColor="@color/text_secondary"><com.google.android.material.textfield.TextInputEditText android:id="@+id/etCatatan" android:layout_width="match_parent" android:layout_height="80dp" android:gravity="top" android:inputType="textMultiLine" android:textColor="@color/white" /></com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <ProgressBar android:id="@+id/progressSimpan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:layout_marginTop="18dp" android:visibility="gone" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnSimpanLaporan" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="18dp" android:layout_marginBottom="24dp" android:text="Kirim Laporan Shift" android:textAllCaps="false" android:textStyle="bold" app:backgroundTint="@color/primary_green" app:cornerRadius="16dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

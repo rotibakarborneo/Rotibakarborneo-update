@@ -1,0 +1,552 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { apiService, formatRupiah } from '../../services/api';
+import { User, Role } from '../../types';
+import {
+  Users,
+  UserPlus,
+  ShieldCheck,
+  Briefcase,
+  Search,
+  Filter,
+  CheckCircle2,
+  X,
+  Phone,
+  Building,
+  DollarSign,
+  UserCheck,
+  Sparkles,
+  AlertCircle
+} from 'lucide-react';
+
+export const MasterKaryawanView: React.FC = () => {
+  const { allCabang, selectedCabangId } = useAuth();
+  const [karyawanList, setKaryawanList] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | Role>('ALL');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // New employee form state - Strictly 2 roles: 'BOS' or 'KARYAWAN'
+  const [formData, setFormData] = useState<{
+    nama: string;
+    username: string;
+    role: Role;
+    id_cabang: string;
+    tarif_per_jam: number;
+    telepon: string;
+  }>({
+    nama: '',
+    username: '',
+    role: 'KARYAWAN',
+    id_cabang: allCabang[0]?.id_cabang || 'CBG01',
+    tarif_per_jam: 18000,
+    telepon: ''
+  });
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getKaryawanList();
+      setKaryawanList(data);
+    } catch (err) {
+      console.error('Failed to load karyawan:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleCreateKaryawan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.nama.trim() || !formData.username.trim()) {
+      alert('Nama dan username wajib diisi.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await apiService.addKaryawan({
+        nama: formData.nama.trim(),
+        username: formData.username.trim().toLowerCase(),
+        role: formData.role,
+        id_cabang: formData.id_cabang,
+        tarif_per_jam: Number(formData.tarif_per_jam) || 0,
+        telepon: formData.telepon.trim(),
+        aktif: true
+      });
+
+      setIsModalOpen(false);
+      setSuccessToast(`Akun ${formData.nama} (${formData.role}) berhasil ditambahkan ke sistem.`);
+      setTimeout(() => setSuccessToast(null), 4000);
+      setFormData({
+        nama: '',
+        username: '',
+        role: 'KARYAWAN',
+        id_cabang: allCabang[0]?.id_cabang || 'CBG01',
+        tarif_per_jam: 18000,
+        telepon: ''
+      });
+      await loadData();
+    } catch (err) {
+      alert('Gagal menambahkan karyawan. Coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Filtered employees
+  const filteredList = karyawanList.filter((k) => {
+    const matchesCabang =
+      selectedCabangId === 'ALL' || k.id_cabang === selectedCabangId;
+    const matchesRole = roleFilter === 'ALL' || k.role === roleFilter;
+    const matchesSearch =
+      k.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      k.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      k.id_karyawan.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCabang && matchesRole && matchesSearch;
+  });
+
+  const totalBos = karyawanList.filter((k) => k.role === 'BOS').length;
+  const totalKaryawan = karyawanList.filter((k) => k.role === 'KARYAWAN').length;
+
+  return (
+    <div className="space-y-6">
+      {/* Toast Notification */}
+      {successToast && (
+        <div className="p-4 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-200 flex items-center justify-between shadow-xl animate-fade-in">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0" />
+            <p className="text-xs font-semibold">{successToast}</p>
+          </div>
+          <button onClick={() => setSuccessToast(null)} className="text-slate-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Top Banner & Explainer */}
+      <div className="ios-glass-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-black tracking-wider text-sky-400 uppercase">
+              STRUKTUR 2-ROLE SYSTEM
+            </span>
+            <span className="text-white/20">•</span>
+            <span className="text-xs text-slate-400">Arsitektur Terpadu HQ & Mobile</span>
+          </div>
+          <h2 className="text-xl font-black text-white tracking-tight">
+            Kelola Personel & Akun Akses
+          </h2>
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            Sistem Roti Bakar Borneo disederhanakan secara presisi menjadi <strong>2 Peran</strong>:
+            <span className="text-indigo-300 font-semibold ml-1">BOS / OWNER</span> (akses penuh portal web HQ) dan
+            <span className="text-sky-300 font-semibold ml-1">KARYAWAN</span> (operasional kasir POS & absensi melalui Flutter Mobile App).
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-600 hover:to-sky-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center gap-2 transition cursor-pointer shrink-0"
+        >
+          <UserPlus className="w-4 h-4" />
+          <span>Tambah Anggota Baru</span>
+        </button>
+      </div>
+
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Personel</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <p className="text-2xl font-black text-white tabular-nums">{karyawanList.length}</p>
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Terdaftar di sistem database</p>
+        </div>
+
+        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role BOS (HQ)</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <p className="text-2xl font-black text-indigo-300 tabular-nums">{totalBos}</p>
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Akses penuh dashboard web</p>
+        </div>
+
+        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role KARYAWAN</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <p className="text-2xl font-black text-sky-300 tabular-nums">{totalKaryawan}</p>
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
+              <Briefcase className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Staf gerai pengguna Flutter app</p>
+        </div>
+
+        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata Upah Lapangan</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <p className="text-2xl font-black text-slate-100 tabular-nums">
+              {formatRupiah(18000)}
+            </p>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Tarif dasar per jam kerja</p>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Cari berdasarkan nama, username, atau ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+          />
+        </div>
+
+        {/* Role Segmented Filter */}
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/60 border border-white/10 text-xs self-start sm:self-auto">
+          <button
+            onClick={() => setRoleFilter('ALL')}
+            className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              roleFilter === 'ALL'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Semua ({karyawanList.length})
+          </button>
+          <button
+            onClick={() => setRoleFilter('BOS')}
+            className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              roleFilter === 'BOS'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            BOS ({totalBos})
+          </button>
+          <button
+            onClick={() => setRoleFilter('KARYAWAN')}
+            className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              roleFilter === 'KARYAWAN'
+                ? 'bg-sky-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Karyawan ({totalKaryawan})
+          </button>
+        </div>
+      </div>
+
+      {/* Personnel Table */}
+      <div className="ios-glass rounded-2xl overflow-hidden border border-white/10">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-900/80 text-slate-400 text-[11px] uppercase tracking-wider font-semibold border-b border-white/10">
+              <tr>
+                <th className="py-3 px-4">Nama & ID</th>
+                <th className="py-3 px-4">Peran (Role)</th>
+                <th className="py-3 px-4">Penempatan Cabang</th>
+                <th className="py-3 px-4">Tarif Jam</th>
+                <th className="py-3 px-4">Kontak Telepon</th>
+                <th className="py-3 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                    Memuat data personel...
+                  </td>
+                </tr>
+              ) : filteredList.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                    Tidak ada personel yang sesuai filter pencarian.
+                  </td>
+                </tr>
+              ) : (
+                filteredList.map((k) => {
+                  const branchObj = allCabang.find((c) => c.id_cabang === k.id_cabang);
+                  const isBos = k.role === 'BOS';
+
+                  return (
+                    <tr key={k.id_karyawan} className="hover:bg-white/[0.03] transition">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                              isBos
+                                ? 'bg-gradient-to-tr from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20'
+                                : 'bg-slate-800 text-sky-400 border border-sky-500/20'
+                            }`}
+                          >
+                            {k.nama.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-white text-xs">{k.nama}</p>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                              <span>ID: {k.id_karyawan}</span>
+                              <span>•</span>
+                              <span>@{k.username}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {isBos ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-black text-[10px] tracking-wider">
+                            <ShieldCheck className="w-3 h-3 text-indigo-400" />
+                            BOS / OWNER
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold text-[10px] tracking-wider">
+                            <Briefcase className="w-3 h-3 text-sky-400" />
+                            KARYAWAN GERAI
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5 text-slate-300">
+                          <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="font-medium truncate max-w-[200px]">
+                            {branchObj?.nama_cabang || k.id_cabang}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 tabular-nums">
+                        {isBos ? (
+                          <span className="text-slate-400 text-[11px] italic">Owner / Eksekutif</span>
+                        ) : (
+                          <span className="font-semibold text-slate-200">
+                            {formatRupiah(k.tarif_per_jam || 18000)} / jam
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5 text-slate-300 font-mono text-[11px]">
+                          <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{k.telepon || '-'}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">
+                          Aktif
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal: Tambah Karyawan */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="ios-glass-card rounded-3xl w-full max-w-lg p-6 border border-white/20 shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Tambah Personel Baru</h3>
+                  <p className="text-[11px] text-slate-400">Pilih salah satu dari 2 peran resmi</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateKaryawan} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Misal: Dimas Setiawan"
+                  value={formData.nama}
+                  onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Username Login
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="misal: dimas"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Nomor WhatsApp / Telepon
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="0812-xxxx-xxxx"
+                    value={formData.telepon}
+                    onChange={(e) => setFormData({ ...formData, telepon: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Peran / Role Selection: Exactly 2 Roles */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Peran Akun (Role)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setFormData({ ...formData, role: 'KARYAWAN' })}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition flex flex-col justify-between ${
+                      formData.role === 'KARYAWAN'
+                        ? 'bg-sky-500/20 border-sky-400 text-white'
+                        : 'bg-slate-900/50 border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Briefcase className="w-4 h-4 text-sky-400" />
+                      {formData.role === 'KARYAWAN' && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-white">KARYAWAN</p>
+                      <p className="text-[10px] text-slate-300 mt-0.5">
+                        Operasional gerai via Flutter App (POS & Absen)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, role: 'BOS' })}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition flex flex-col justify-between ${
+                      formData.role === 'BOS'
+                        ? 'bg-indigo-500/20 border-indigo-400 text-white'
+                        : 'bg-slate-900/50 border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                      {formData.role === 'BOS' && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-white">BOS / OWNER</p>
+                      <p className="text-[10px] text-slate-300 mt-0.5">
+                        Akses penuh web executive dashboard HQ
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Penempatan Cabang
+                  </label>
+                  <select
+                    value={formData.id_cabang}
+                    onChange={(e) => setFormData({ ...formData, id_cabang: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    {allCabang.map((c) => (
+                      <option key={c.id_cabang} value={c.id_cabang} className="bg-slate-900">
+                        {c.nama_cabang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Tarif Upah Per Jam (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={formData.tarif_per_jam}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tarif_per_jam: Number(e.target.value) })
+                    }
+                    disabled={formData.role === 'BOS'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500 ${
+                      formData.role === 'BOS' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  />
+                  {formData.role === 'BOS' && (
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Role BOS tidak dihitung upah per jam
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-600 hover:to-sky-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Personel'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

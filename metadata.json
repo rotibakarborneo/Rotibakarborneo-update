@@ -1,0 +1,8 @@
+{
+  "name": "Roti Bakar Borneo",
+  "description": "Sistem Manajemen Outlet Roti Bakar Borneo: Kasir POS, Absen Presensi GPS & Selfie, Laporan Shift, Payroll, Keuangan, dan Dashboard Monitoring Cabang.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

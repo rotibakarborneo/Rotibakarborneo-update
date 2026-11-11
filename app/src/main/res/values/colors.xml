@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary_green">#32D74B</color>
+    <color name="status_open">#32D74B</color>
+    <color name="status_closed">#FF453A</color>
+    <color name="status_open_bg">#1B5E20</color>
+    <color name="status_closed_bg">#B71C1C</color>
+    <color name="text_secondary">#8E8E93</color>
+
+    <!-- iOS Dark Mode Palette -->
+    <color name="dark_background">#000000</color>
+    <color name="dark_surface">#C91C1C1E</color>
+    <color name="dark_secondary_surface">#B82C2C2E</color>
+    <color name="glass_stroke">#40FFFFFF</color>
+    <color name="dark_on_surface">#FFFFFF</color>
+</resources>
