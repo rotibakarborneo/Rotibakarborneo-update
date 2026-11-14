@@ -9,7 +9,8 @@ import {
   KeuanganItem,
   PayrollItem,
   BonusItem,
-  CabangDashboard
+  CabangDashboard,
+  MenuKasirItem
 } from '../types';
 
 // Formatters
@@ -30,11 +31,16 @@ export function formatNumber(value: number): string {
 }
 
 export function getTodayDateStr(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  // Use WIB (UTC+7)
+  const wib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  return wib.toISOString().slice(0, 10);
+}
+
+export interface PayrollResponse {
+  activeMonth: string;
+  availableMonths: string[];
+  payroll: PayrollItem[];
+  bonus: BonusItem[];
 }
 
 export function calculateDistanceMeters(
@@ -79,7 +85,7 @@ class ApiService {
     return this.fetchApi<CabangDashboard[]>('/shifts/live');
   }
 
-  // Branches
+  // Branches CRUD
   async getCabangList(): Promise<Cabang[]> {
     return this.fetchApi<Cabang[]>('/cabang');
   }
@@ -91,7 +97,20 @@ class ApiService {
     });
   }
 
-  // Employees (Only 2 Roles: BOS and KARYAWAN)
+  async updateCabang(id: string, data: Partial<Cabang>): Promise<Cabang> {
+    return this.fetchApi<Cabang>(`/cabang/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteCabang(id: string): Promise<any> {
+    return this.fetchApi(`/cabang/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Employees CRUD (Strictly 2 Roles: BOS and KARYAWAN)
   async getKaryawanList(): Promise<User[]> {
     return this.fetchApi<User[]>('/karyawan');
   }
@@ -100,6 +119,19 @@ class ApiService {
     return this.fetchApi<User>('/karyawan', {
       method: 'POST',
       body: JSON.stringify(data)
+    });
+  }
+
+  async updateKaryawan(id: string, data: Partial<User>): Promise<User> {
+    return this.fetchApi<User>(`/karyawan/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteKaryawan(id: string): Promise<any> {
+    return this.fetchApi(`/karyawan/${id}`, {
+      method: 'DELETE'
     });
   }
 
@@ -146,6 +178,66 @@ class ApiService {
     return this.fetchApi<KeuanganItem>('/keuangan', {
       method: 'POST',
       body: JSON.stringify(data)
+    });
+  }
+
+  // Master Menu Kasir (Porsi Utuh & Separuh)
+  async getMenuList(porsi?: string): Promise<MenuKasirItem[]> {
+    const query = porsi ? `?porsi=${porsi}` : '';
+    return this.fetchApi<MenuKasirItem[]>(`/menu${query}`);
+  }
+
+  async addMenu(data: {
+    nama_menu: string;
+    porsi?: string;
+    harga: number;
+    satuan_roti?: number;
+    cara_masak?: string;
+    aktif?: boolean;
+    urutan?: number;
+    create_both?: boolean;
+    harga_separuh?: number;
+  }): Promise<any> {
+    return this.fetchApi('/menu', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateMenu(id: string, data: Partial<MenuKasirItem>): Promise<MenuKasirItem> {
+    return this.fetchApi<MenuKasirItem>(`/menu/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteMenu(id: string): Promise<any> {
+    return this.fetchApi(`/menu/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Payroll & Bonus (Real calculation from DB shifts, lateness rules & bon)
+  async getPayroll(month?: string): Promise<PayrollResponse> {
+    const query = month ? `?month=${encodeURIComponent(month)}` : '';
+    return this.fetchApi<PayrollResponse>(`/payroll${query}`);
+  }
+
+  // Trigger read-only Google Sheet sync
+  async syncSheets(): Promise<{ success: boolean; lastSyncedAt?: string; latestDate?: string }> {
+    const res = await fetch('/api/v1/sync', { method: 'POST' });
+    if (!res.ok) throw new Error(`Sync error ${res.status}`);
+    return res.json();
+  }
+
+  // Gemini Executive AI Assistant (with conversation history)
+  async askAiAssistant(
+    message: string,
+    history: Array<{ sender: 'user' | 'ai'; text: string }> = []
+  ): Promise<{ reply: string; model?: string }> {
+    return this.fetchApi<{ reply: string; model?: string }>('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history })
     });
   }
 }

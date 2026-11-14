@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Store, Clock, RefreshCw, Calendar, Sparkles } from 'lucide-react';
+import { Store, Clock, RefreshCw } from 'lucide-react';
+import { OutletNotificationCenter } from './OutletNotificationCenter';
 
 interface HeaderBarProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
@@ -23,6 +24,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
       const now = new Date();
       setLiveTime(
         now.toLocaleDateString('id-ID', {
+          timeZone: 'Asia/Jakarta',
           weekday: 'short',
           day: 'numeric',
           month: 'short',
@@ -30,11 +32,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         }) +
           ' • ' +
           now.toLocaleTimeString('id-ID', {
+            timeZone: 'Asia/Jakarta',
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
           }) +
-          ' WITA'
+          ' WIB'
       );
     };
     updateTime();
@@ -43,17 +46,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   }, []);
 
   return (
-    <header className="ios-glass rounded-2xl px-5 py-3.5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-white/10 shadow-lg">
+    <header className="ios-glass rounded-2xl px-5 py-3.5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-white/10 shadow-lg relative z-30">
       <div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-            PORTAL BOS & ADMINISTRASI PUSAT
-          </span>
-          <span className="text-white/20">•</span>
-          <span className="text-[10px] font-semibold text-slate-400">Roti Bakar Borneo</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">{title}</h1>
-        <p className="text-xs text-slate-300 mt-0.5">{subtitle}</p>
+        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">{title}</h1>
+        {subtitle && <p className="text-xs text-slate-300 mt-0.5">{subtitle}</p>}
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
@@ -81,6 +77,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           <Clock className="w-3.5 h-3.5 text-sky-400" />
           <span>{liveTime}</span>
         </div>
+
+        {/* iOS Notification Bell */}
+        <OutletNotificationCenter />
 
         {/* Refresh button */}
         {onRefresh && (

@@ -86,17 +86,11 @@ export const CashflowLedgerView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="ios-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-            PEMBUKUAN KAS & ARUS DANA
-          </span>
-          <h2 className="text-xl font-black text-white">Buku Kas & Keuangan Pusat</h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Pencatatan uang masuk otomatis dari setoran shift dan pengeluaran belanja bahan baku.
-          </p>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-300 font-semibold">
+          Catatan Arus Kas
+        </span>
 
         <button
           onClick={() => setModalOpen(true)}

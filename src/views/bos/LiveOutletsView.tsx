@@ -33,24 +33,18 @@ export const LiveOutletsView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="ios-glass rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-            STATUS OPERASIONAL REAL-TIME
-          </span>
-          <h2 className="text-xl font-black text-white">Monitoring Outlet Gerai Live</h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Informasi status buka gerai, presensi selfie staf bertugas, dan estimasi upah shift saat ini.
-          </p>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-300 font-semibold">
+          Gerai Terpantau: <strong className="text-white font-mono">{displayedOutlets.length}</strong>
+        </span>
 
         <button
           onClick={loadData}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-bold text-slate-200 border border-white/10 cursor-pointer self-start sm:self-auto transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-bold text-slate-200 border border-white/10 cursor-pointer transition"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${loading ? 'animate-spin' : ''}`} />
-          Perbarui Live
+          Perbarui
         </button>
       </div>
 
@@ -97,11 +91,11 @@ export const LiveOutletsView: React.FC = () => {
                 <div className="text-xs text-slate-400 space-y-1 mb-4">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{cabangInfo?.alamat || 'Banjarmasin'}</span>
+                    <span className="truncate">{cabangInfo?.alamat || 'D.I. Yogyakarta'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Jam Buka Pertama: <strong className="text-white">{outlet.jam_buka_pertama ? `${outlet.jam_buka_pertama} WITA` : '—'}</strong></span>
+                    <span>Jam Buka Pertama: <strong className="text-white">{outlet.jam_buka_pertama ? `${outlet.jam_buka_pertama} WIB` : '—'}</strong></span>
                   </div>
                   {cabangInfo?.telepon && (
                     <div className="flex items-center gap-1.5">
@@ -130,49 +124,57 @@ export const LiveOutletsView: React.FC = () => {
                 </div>
 
                 {/* Staff on duty */}
-                <div className="pt-3 border-t border-white/10">
-                  <span className="text-[11px] font-bold text-slate-300 block mb-2 flex items-center justify-between">
-                    <span>STAF BERTUGAS ({outlet.karyawan_absen.length}):</span>
-                    {isBuka && <span className="text-[10px] text-emerald-400 font-normal">Shift Berjalan</span>}
-                  </span>
+                {(() => {
+                  const staffList = outlet.karyawan_absen || (outlet as any).karyawan_bertugas || [];
+                  return (
+                    <div className="pt-3 border-t border-white/10">
+                      <span className="text-[11px] font-bold text-slate-300 block mb-2 flex items-center justify-between">
+                        <span>STAF BERTUGAS ({staffList.length}):</span>
+                        {isBuka && <span className="text-[10px] text-emerald-400 font-normal">Shift Berjalan</span>}
+                      </span>
 
-                  {outlet.karyawan_absen.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-slate-500 italic bg-white/2 rounded-xl border border-white/5">
-                      Belum ada karyawan yang absen masuk.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {outlet.karyawan_absen.map((k, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-white/5"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            {k.foto_url ? (
-                              <img
-                                src={k.foto_url}
-                                alt="Selfie"
-                                className="w-8 h-8 rounded-lg object-cover border border-indigo-500/30 shadow"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center text-xs font-bold">
-                                {k.nama_karyawan.charAt(0)}
-                              </div>
-                            )}
-                            <div>
-                              <strong className="text-xs text-white block">{k.nama_karyawan}</strong>
-                              <span className="text-[10px] text-slate-400">Masuk {k.jam_masuk} WITA</span>
-                            </div>
-                          </div>
-
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                            {k.status_masuk || 'Hadir'}
-                          </span>
+                      {staffList.length === 0 ? (
+                        <div className="py-4 text-center text-xs text-slate-500 italic bg-white/2 rounded-xl border border-white/5">
+                          Belum ada karyawan yang absen masuk.
                         </div>
-                      ))}
+                      ) : (
+                        <div className="space-y-2">
+                          {staffList.map((k, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-white/5"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                {k.foto_url ? (
+                                  <img
+                                    src={k.foto_url}
+                                    alt="Selfie"
+                                    className="w-8 h-8 rounded-lg object-cover border border-indigo-500/30 shadow"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center text-xs font-bold">
+                                    {k.nama_karyawan ? k.nama_karyawan.charAt(0) : '?'}
+                                  </div>
+                                )}
+                                <div>
+                                  <strong className="text-xs text-white block">{k.nama_karyawan}</strong>
+                                  <span className="text-[10px] text-slate-400">Masuk {k.jam_masuk} WIB</span>
+                                </div>
+                              </div>
+
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                {k.status_masuk || 'Hadir'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
 
               {/* Estimated labor cost */}
@@ -180,7 +182,7 @@ export const LiveOutletsView: React.FC = () => {
                 <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                   <span className="text-slate-400">Estimasi Upah Shift Hari Ini:</span>
                   <span className="font-mono font-bold text-sky-400">
-                    {formatRupiah(outlet.estimasi_gaji_hari_ini || 5.5 * 18000)}
+                    {formatRupiah(outlet.estimasi_gaji_hari_ini ?? 0)}
                   </span>
                 </div>
               )}

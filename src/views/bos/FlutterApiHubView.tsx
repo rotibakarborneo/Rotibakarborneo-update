@@ -248,24 +248,11 @@ class BorneoApiClient {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="ios-glass-card p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <div className="ios-glass-card p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-black tracking-wider text-sky-400 uppercase">
-              FLUTTER CROSS-PLATFORM HUB
-            </span>
-            <span className="text-white/20">•</span>
-            <span className="text-xs text-slate-400">iOS & Android App Integration</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            REST API & Kontrak Mobile Staf Karyawan
+          <h2 className="text-lg font-black text-white tracking-tight">
+            REST API Flutter Mobile (iOS & Android)
           </h2>
-          <p className="text-xs text-slate-300 mt-1.5 max-w-2xl leading-relaxed">
-            Sesuai arsitektur baru, karyawan di lapangan (baik pengguna <strong>iPhone</strong> maupun{' '}
-            <strong>Android</strong>) menggunakan aplikasi <strong>Flutter</strong> portabel untuk
-            absen GPS selfie, kasir POS, kasbon, dan laporan shift. Backend Node.js ini menyediakan
-            seluruh REST endpoint yang siap dikonsumsi.
-          </p>
         </div>
 
         {/* Badges / Tech stack */}

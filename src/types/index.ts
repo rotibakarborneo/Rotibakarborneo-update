@@ -126,7 +126,7 @@ export interface BonItem {
   nama_cabang: string;
   nominal: number;
   catatan: string;
-  status: 'DIAJUKAN' | 'DISETUJUI' | 'DITOLAK' | 'LUNAS';
+  status: 'MENUNGGU' | 'DIAJUKAN' | 'DISETUJUI' | 'DITOLAK' | 'LUNAS';
   dibuat_pada: string;
   diverifikasi_pada?: string | null;
   catatan_admin?: string;
@@ -165,11 +165,15 @@ export interface KeuanganItem {
 export interface PayrollItem {
   id_karyawan: string;
   nama: string;
+  id_cabang?: string;
   nama_cabang: string;
   tarif_per_jam: number;
   jumlah_hari_masuk: number;
   total_jam_kerja: number;
   total_menit_terlambat: number;
+  potongan_telat: number;
+  potongan_kasbon: number;
+  kasbon_menunggu: number;
   gaji_kotor: number;
   total_potongan: number;
   gaji_bersih: number;
@@ -187,3 +191,16 @@ export interface BonusItem {
   kelebihan_roti: number;
   bonus_nominal: number;
 }
+
+export interface MenuKasirItem {
+  menu_id: string;
+  nama_menu: string;
+  porsi: 'UTUH' | 'SEPARUH';
+  harga: number;
+  satuan_roti: number; // 1.0 untuk UTUH, 0.5 untuk SEPARUH
+  cara_masak?: 'BAKAR' | 'KUKUS' | 'SEMUA';
+  aktif: boolean;
+  urutan?: number;
+  diperbarui_pada?: string;
+}
+

@@ -27,7 +27,10 @@ export const KasbonApprovalView: React.FC = () => {
   const filtered = useMemo(() => {
     return bonList.filter((b) => {
       const matchBranch = selectedCabangId === 'ALL' || b.id_cabang === selectedCabangId;
-      const matchStatus = filterStatus === 'ALL' || b.status === filterStatus;
+      const isPending = b.status === 'MENUNGGU' || b.status === 'DIAJUKAN';
+      const matchStatus =
+        filterStatus === 'ALL' ||
+        (filterStatus === 'PENDING' ? isPending : b.status === filterStatus);
       return matchBranch && matchStatus;
     });
   }, [bonList, selectedCabangId, filterStatus]);
@@ -36,7 +39,9 @@ export const KasbonApprovalView: React.FC = () => {
     .filter((b) => b.status === 'DISETUJUI')
     .reduce((a, b) => a + b.sisa_bon, 0);
 
-  const pendingCount = bonList.filter((b) => b.status === 'DIAJUKAN').length;
+  const pendingCount = bonList.filter(
+    (b) => b.status === 'MENUNGGU' || b.status === 'DIAJUKAN'
+  ).length;
 
   const handleAction = async (status: 'DISETUJUI' | 'DITOLAK' | 'LUNAS') => {
     if (!selectedBon) return;
@@ -51,17 +56,11 @@ export const KasbonApprovalView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="ios-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-            PERSETUJUAN PINJAMAN KARYAWAN
-          </span>
-          <h2 className="text-xl font-black text-white">Manajemen Kasbon Karyawan</h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Persetujuan permohonan kasbon darurat staf gerai dari mobile app dan pemotongan otomatis pada payroll.
-          </p>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <span className="text-xs text-slate-300 font-semibold">
+          Pengajuan Kasbon Karyawan
+        </span>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/60 border border-white/10">
@@ -86,7 +85,7 @@ export const KasbonApprovalView: React.FC = () => {
             className="bg-slate-800/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none cursor-pointer"
           >
             <option value="ALL">Semua Status</option>
-            <option value="DIAJUKAN">Menunggu Verifikasi</option>
+            <option value="PENDING">Menunggu Verifikasi</option>
             <option value="DISETUJUI">Disetujui (Berjalan)</option>
             <option value="DITOLAK">Ditolak</option>
             <option value="LUNAS">Lunas</option>
@@ -145,13 +144,13 @@ export const KasbonApprovalView: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-3 text-[11px] text-slate-400">{b.dibuat_pada}</td>
                     <td className="py-3.5 px-3 text-right">
-                      {b.status === 'DIAJUKAN' ? (
+                      {b.status === 'MENUNGGU' || b.status === 'DIAJUKAN' ? (
                         <button
                           onClick={() => {
                             setSelectedBon(b);
-                            setCatatanAdmin('Disetujui Bos Rahman. Potong payroll.');
+                            setCatatanAdmin('Disetujui Bos Faqih. Potong payroll.');
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer shadow transition"
+                          className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs cursor-pointer shadow transition"
                         >
                           Verifikasi
                         </button>

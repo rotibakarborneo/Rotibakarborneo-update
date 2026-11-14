@@ -20,3 +20,9 @@ app/google-services.json
 .externalNativeBuild
 .cxx
 local.properties
+node_modules/
+dist/
+.env
+.env.local
+.app_data.json
+*.log

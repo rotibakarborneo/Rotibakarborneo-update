@@ -15,8 +15,12 @@ import {
   Building,
   DollarSign,
   UserCheck,
-  Sparkles,
-  AlertCircle
+  Edit3,
+  Trash2,
+  Power,
+  AlertCircle,
+  Check,
+  Lock
 } from 'lucide-react';
 
 export const MasterKaryawanView: React.FC = () => {
@@ -25,11 +29,15 @@ export const MasterKaryawanView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | Role>('ALL');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  // New employee form state - Strictly 2 roles: 'BOS' or 'KARYAWAN'
+  // Modal State
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
+  const [selectedKaryawan, setSelectedKaryawan] = useState<User | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Form State
   const [formData, setFormData] = useState<{
     nama: string;
     username: string;
@@ -37,14 +45,21 @@ export const MasterKaryawanView: React.FC = () => {
     id_cabang: string;
     tarif_per_jam: number;
     telepon: string;
+    aktif: boolean;
   }>({
     nama: '',
     username: '',
     role: 'KARYAWAN',
     id_cabang: allCabang[0]?.id_cabang || 'CBG01',
     tarif_per_jam: 18000,
-    telepon: ''
+    telepon: '',
+    aktif: true
   });
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const loadData = async () => {
     try {
@@ -62,7 +77,35 @@ export const MasterKaryawanView: React.FC = () => {
     loadData();
   }, []);
 
-  const handleCreateKaryawan = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setSelectedKaryawan(null);
+    setFormData({
+      nama: '',
+      username: '',
+      role: 'KARYAWAN',
+      id_cabang: allCabang[0]?.id_cabang || 'CBG01',
+      tarif_per_jam: 18000,
+      telepon: '',
+      aktif: true
+    });
+    setModalMode('create');
+  };
+
+  const handleOpenEdit = (user: User) => {
+    setSelectedKaryawan(user);
+    setFormData({
+      nama: user.nama,
+      username: user.username,
+      role: user.role,
+      id_cabang: user.id_cabang || allCabang[0]?.id_cabang || 'CBG01',
+      tarif_per_jam: user.tarif_per_jam || 0,
+      telepon: user.telepon || '',
+      aktif: user.aktif !== false
+    });
+    setModalMode('edit');
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama.trim() || !formData.username.trim()) {
       alert('Nama dan username wajib diisi.');
@@ -71,30 +114,71 @@ export const MasterKaryawanView: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      await apiService.addKaryawan({
-        nama: formData.nama.trim(),
-        username: formData.username.trim().toLowerCase(),
-        role: formData.role,
-        id_cabang: formData.id_cabang,
-        tarif_per_jam: Number(formData.tarif_per_jam) || 0,
-        telepon: formData.telepon.trim(),
-        aktif: true
-      });
+      if (modalMode === 'create') {
+        await apiService.addKaryawan({
+          nama: formData.nama.trim(),
+          username: formData.username.trim().toLowerCase(),
+          role: formData.role,
+          id_cabang: formData.id_cabang,
+          tarif_per_jam: Number(formData.tarif_per_jam) || 0,
+          telepon: formData.telepon.trim(),
+          aktif: formData.aktif
+        });
+        showToast(`Akun ${formData.nama} (${formData.role}) berhasil ditambahkan.`);
+      } else if (modalMode === 'edit' && selectedKaryawan) {
+        await apiService.updateKaryawan(selectedKaryawan.id_karyawan, {
+          nama: formData.nama.trim(),
+          username: formData.username.trim().toLowerCase(),
+          role: formData.role,
+          id_cabang: formData.id_cabang,
+          tarif_per_jam: Number(formData.tarif_per_jam) || 0,
+          telepon: formData.telepon.trim(),
+          aktif: formData.aktif
+        });
+        showToast(`Data personel ${formData.nama} berhasil diperbarui.`);
+      }
 
-      setIsModalOpen(false);
-      setSuccessToast(`Akun ${formData.nama} (${formData.role}) berhasil ditambahkan ke sistem.`);
-      setTimeout(() => setSuccessToast(null), 4000);
-      setFormData({
-        nama: '',
-        username: '',
-        role: 'KARYAWAN',
-        id_cabang: allCabang[0]?.id_cabang || 'CBG01',
-        tarif_per_jam: 18000,
-        telepon: ''
-      });
+      setModalMode(null);
+      setSelectedKaryawan(null);
       await loadData();
     } catch (err) {
-      alert('Gagal menambahkan karyawan. Coba lagi.');
+      alert('Gagal menyimpan personel. Coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleAktif = async (user: User) => {
+    if (user.id_karyawan === 'BOS001') {
+      showToast('Akun Super Bos Utama harus selalu aktif.');
+      return;
+    }
+    try {
+      const nextStatus = !user.aktif;
+      await apiService.updateKaryawan(user.id_karyawan, { aktif: nextStatus });
+      await loadData();
+      showToast(`Status ${user.nama} diubah menjadi ${nextStatus ? 'Aktif' : 'Nonaktif'}.`);
+    } catch (err) {
+      console.warn('Failed toggling status', err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteCandidate) return;
+    if (deleteCandidate.id_karyawan === 'BOS001') {
+      alert('Akun Super Bos Utama tidak dapat dihapus.');
+      setDeleteCandidate(null);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await apiService.deleteKaryawan(deleteCandidate.id_karyawan);
+      showToast(`Personel "${deleteCandidate.nama}" telah dihapus.`);
+      setDeleteCandidate(null);
+      await loadData();
+    } catch (err) {
+      alert('Gagal menghapus personel.');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,61 +202,47 @@ export const MasterKaryawanView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
-      {successToast && (
-        <div className="p-4 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-200 flex items-center justify-between shadow-xl animate-fade-in">
+      {toastMessage && (
+        <div className="p-4 rounded-2xl bg-sky-500/20 border border-sky-500/30 text-sky-200 flex items-center justify-between shadow-2xl animate-fade-in">
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0" />
-            <p className="text-xs font-semibold">{successToast}</p>
+            <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0" />
+            <p className="text-xs font-semibold">{toastMessage}</p>
           </div>
-          <button onClick={() => setSuccessToast(null)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Top Banner & Explainer */}
-      <div className="ios-glass-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-black tracking-wider text-sky-400 uppercase">
-              STRUKTUR 2-ROLE SYSTEM
-            </span>
-            <span className="text-white/20">•</span>
-            <span className="text-xs text-slate-400">Arsitektur Terpadu HQ & Mobile</span>
-          </div>
-          <h2 className="text-xl font-black text-white tracking-tight">
-            Kelola Personel & Akun Akses
-          </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Sistem Roti Bakar Borneo disederhanakan secara presisi menjadi <strong>2 Peran</strong>:
-            <span className="text-indigo-300 font-semibold ml-1">BOS / OWNER</span> (akses penuh portal web HQ) dan
-            <span className="text-sky-300 font-semibold ml-1">KARYAWAN</span> (operasional kasir POS & absensi melalui Flutter Mobile App).
-          </p>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-300 font-semibold">
+          Daftar Karyawan
+        </span>
 
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-600 hover:to-sky-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center gap-2 transition cursor-pointer shrink-0"
+          onClick={handleOpenCreate}
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-sky-500/25 flex items-center gap-1.5 transition cursor-pointer shrink-0"
         >
           <UserPlus className="w-4 h-4" />
-          <span>Tambah Anggota Baru</span>
+          <span>Tambah Karyawan</span>
         </button>
       </div>
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+        <div className="ios-glass p-5 rounded-2xl">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Personel</p>
           <div className="flex items-baseline justify-between mt-2">
             <p className="text-2xl font-black text-white tabular-nums">{karyawanList.length}</p>
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Terdaftar di sistem database</p>
         </div>
 
-        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+        <div className="ios-glass p-5 rounded-2xl">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role BOS (HQ)</p>
           <div className="flex items-baseline justify-between mt-2">
             <p className="text-2xl font-black text-indigo-300 tabular-nums">{totalBos}</p>
@@ -183,24 +253,24 @@ export const MasterKaryawanView: React.FC = () => {
           <p className="text-[11px] text-slate-400 mt-1">Akses penuh dashboard web</p>
         </div>
 
-        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+        <div className="ios-glass p-5 rounded-2xl">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role KARYAWAN</p>
           <div className="flex items-baseline justify-between mt-2">
             <p className="text-2xl font-black text-sky-300 tabular-nums">{totalKaryawan}</p>
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Staf gerai pengguna Flutter app</p>
         </div>
 
-        <div className="ios-glass p-5 rounded-2xl border border-white/10">
+        <div className="ios-glass p-5 rounded-2xl">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata Upah Lapangan</p>
           <div className="flex items-baseline justify-between mt-2">
             <p className="text-2xl font-black text-slate-100 tabular-nums">
               {formatRupiah(18000)}
             </p>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
@@ -217,7 +287,7 @@ export const MasterKaryawanView: React.FC = () => {
             placeholder="Cari berdasarkan nama, username, atau ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/70 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition"
           />
         </div>
 
@@ -227,7 +297,7 @@ export const MasterKaryawanView: React.FC = () => {
             onClick={() => setRoleFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
               roleFilter === 'ALL'
-                ? 'bg-indigo-600 text-white shadow'
+                ? 'bg-sky-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -268,18 +338,19 @@ export const MasterKaryawanView: React.FC = () => {
                 <th className="py-3 px-4">Tarif Jam</th>
                 <th className="py-3 px-4">Kontak Telepon</th>
                 <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
                     Memuat data personel...
                   </td>
                 </tr>
               ) : filteredList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
                     Tidak ada personel yang sesuai filter pencarian.
                   </td>
                 </tr>
@@ -287,15 +358,22 @@ export const MasterKaryawanView: React.FC = () => {
                 filteredList.map((k) => {
                   const branchObj = allCabang.find((c) => c.id_cabang === k.id_cabang);
                   const isBos = k.role === 'BOS';
+                  const isAktif = k.aktif !== false;
+                  const isSuperBos = k.id_karyawan === 'BOS001';
 
                   return (
-                    <tr key={k.id_karyawan} className="hover:bg-white/[0.03] transition">
+                    <tr
+                      key={k.id_karyawan}
+                      className={`hover:bg-white/[0.03] transition ${
+                        !isAktif ? 'opacity-50 saturate-50' : ''
+                      }`}
+                    >
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
                               isBos
-                                ? 'bg-gradient-to-tr from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20'
+                                ? 'bg-gradient-to-tr from-indigo-500 to-sky-500 text-white shadow-md shadow-indigo-500/20'
                                 : 'bg-slate-800 text-sky-400 border border-sky-500/20'
                             }`}
                           >
@@ -353,9 +431,49 @@ export const MasterKaryawanView: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">
-                          Aktif
-                        </span>
+                        <button
+                          onClick={() => handleToggleAktif(k)}
+                          title={isSuperBos ? 'Akun Super Bos Utama' : isAktif ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan'}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition ${
+                            isSuperBos
+                              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 cursor-default'
+                              : isAktif
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20 cursor-pointer'
+                              : 'bg-slate-800 text-slate-400 border-white/10 hover:bg-slate-700 cursor-pointer'
+                          }`}
+                        >
+                          <Power className="w-3 h-3" />
+                          {isAktif ? 'Aktif' : 'Nonaktif'}
+                        </button>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleOpenEdit(k)}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 border border-white/10 transition cursor-pointer"
+                            title="Edit Data Personel"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {isSuperBos ? (
+                            <span
+                              className="p-1.5 rounded-lg bg-white/2 text-slate-600 border border-white/5 cursor-not-allowed"
+                              title="Akun utama tidak dapat dihapus"
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setDeleteCandidate(k)}
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 transition cursor-pointer"
+                              title="Hapus Personel"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -366,29 +484,31 @@ export const MasterKaryawanView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal: Tambah Karyawan */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+      {/* Modal: Create or Edit Personel */}
+      {modalMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
           <div className="ios-glass-card rounded-3xl w-full max-w-lg p-6 border border-white/20 shadow-2xl animate-scale-in">
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                  <UserPlus className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">Tambah Personel Baru</h3>
+                  <h3 className="text-base font-black text-white">
+                    {modalMode === 'create' ? 'Tambah Personel Baru' : `Edit: ${selectedKaryawan?.nama}`}
+                  </h3>
                   <p className="text-[11px] text-slate-400">Pilih salah satu dari 2 peran resmi</p>
                 </div>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setModalMode(null)}
                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateKaryawan} className="mt-5 space-y-4">
+            <form onSubmit={handleSave} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
                   Nama Lengkap
@@ -399,7 +519,7 @@ export const MasterKaryawanView: React.FC = () => {
                   placeholder="Misal: Dimas Setiawan"
                   value={formData.nama}
                   onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -414,7 +534,7 @@ export const MasterKaryawanView: React.FC = () => {
                     placeholder="misal: dimas"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
                   />
                 </div>
 
@@ -427,7 +547,7 @@ export const MasterKaryawanView: React.FC = () => {
                     placeholder="0812-xxxx-xxxx"
                     value={formData.telepon}
                     onChange={(e) => setFormData({ ...formData, telepon: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
                   />
                 </div>
               </div>
@@ -492,7 +612,7 @@ export const MasterKaryawanView: React.FC = () => {
                   <select
                     value={formData.id_cabang}
                     onChange={(e) => setFormData({ ...formData, id_cabang: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer"
                   >
                     {allCabang.map((c) => (
                       <option key={c.id_cabang} value={c.id_cabang} className="bg-slate-900">
@@ -515,7 +635,7 @@ export const MasterKaryawanView: React.FC = () => {
                       setFormData({ ...formData, tarif_per_jam: Number(e.target.value) })
                     }
                     disabled={formData.role === 'BOS'}
-                    className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-sky-500 ${
                       formData.role === 'BOS' ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   />
@@ -527,10 +647,22 @@ export const MasterKaryawanView: React.FC = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">Status Akun</label>
+                <select
+                  value={formData.aktif ? 'true' : 'false'}
+                  onChange={(e) => setFormData({ ...formData, aktif: e.target.value === 'true' })}
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                >
+                  <option value="true">Aktif</option>
+                  <option value="false">Nonaktif</option>
+                </select>
+              </div>
+
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => setModalMode(null)}
                   className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs transition cursor-pointer"
                 >
                   Batal
@@ -538,12 +670,50 @@ export const MasterKaryawanView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-600 hover:to-sky-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Personel'}
+                  <Check className="w-4 h-4" />
+                  {isSubmitting ? 'Menyimpan...' : modalMode === 'create' ? 'Simpan Personel' : 'Perbarui Personel'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Delete Confirmation */}
+      {deleteCandidate && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="ios-glass-card border border-rose-500/30 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-3 text-rose-400 mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-black text-white text-base">Hapus Personel?</h4>
+                <p className="text-[11px] text-slate-400">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed mb-4">
+              Apakah Anda yakin ingin menghapus <strong>{deleteCandidate.nama}</strong> ({deleteCandidate.id_karyawan}) dengan username @{deleteCandidate.username}?
+            </p>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setDeleteCandidate(null)}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer transition disabled:opacity-50"
+              >
+                {isSubmitting ? 'Menghapus...' : 'Ya, Hapus Personel'}
+              </button>
+            </div>
           </div>
         </div>
       )}

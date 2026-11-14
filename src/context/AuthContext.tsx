@@ -8,18 +8,20 @@ interface AuthContextType {
   allCabang: Cabang[];
   selectedCabangId: string;
   setSelectedCabangId: (id: string) => void;
-  refreshAll: () => Promise<void>;
+  refreshAll: (triggerSync?: boolean) => Promise<void>;
   isLoading: boolean;
 }
 
 const defaultBos: User = {
-  id_karyawan: 'BOS001',
-  nama: 'H. Rahman Borneo',
-  username: 'bos',
+  id_karyawan: 'ADM001',
+  nama: 'Faqih',
+  username: 'admin',
   role: 'BOS',
   id_cabang: 'CBG01',
   aktif: true,
-  telepon: '0811-500-7890'
+  tarif_per_jam: 6820,
+  foto_profil_url: 'https://lh3.googleusercontent.com/d/1FzfOK7KjRNV0Ks-M9l6mcCcVJvC90h7p',
+  telepon: '0812-5100-9988'
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,9 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedCabangId, setSelectedCabangId] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const refreshAll = async () => {
+  const refreshAll = async (triggerSync: boolean = false) => {
     try {
       setIsLoading(true);
+      if (triggerSync) {
+        await apiService.syncSheets().catch(() => null);
+      }
       const [cabangData, karyawanData] = await Promise.all([
         apiService.getCabangList(),
         apiService.getKaryawanList()
@@ -48,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    refreshAll();
+    refreshAll(false);
   }, []);
 
   return (

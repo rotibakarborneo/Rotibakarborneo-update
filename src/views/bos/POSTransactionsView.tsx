@@ -56,17 +56,11 @@ export const POSTransactionsView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="ios-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-            POINT OF SALE FEED LIVE
-          </span>
-          <h2 className="text-xl font-black text-white">Transaksi Kasir Seluruh Gerai</h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Pantauan live struk penjualan, porsi pesanan, dan metode pembayaran dari kasir outlet.
-          </p>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <span className="text-xs text-slate-300 font-semibold">
+          Daftar Struk Transaksi ({filtered.length})
+        </span>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/60 border border-white/10">
